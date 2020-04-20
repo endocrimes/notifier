@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/endocrimes/notifier/internal/bot"
-	"github.com/endocrimes/notifier/internal/tokensigner"
+	"github.com/endocrimes/endobot/internal/bot"
+	"github.com/endocrimes/endobot/internal/tokensigner"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-hclog"
 )

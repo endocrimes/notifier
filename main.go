@@ -6,10 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/endocrimes/notifier/internal/api"
-	"github.com/endocrimes/notifier/internal/bot"
-	"github.com/endocrimes/notifier/internal/tokensigner"
-	"github.com/endocrimes/notifier/internal/tokensigner/jwt"
+	"github.com/endocrimes/endobot/internal/api"
+	"github.com/endocrimes/endobot/internal/bot"
+	"github.com/endocrimes/endobot/internal/tokensigner"
+	"github.com/endocrimes/endobot/internal/tokensigner/jwt"
 	jwtlib "github.com/gbrlsnchs/jwt/v3"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/hashicorp/go-hclog"
@@ -32,7 +32,7 @@ func loadSignerFromEnv(logger hclog.Logger) tokensigner.TokenSigner {
 
 func main() {
 	logger := hclog.New(&hclog.LoggerOptions{
-		Name:  "notifier",
+		Name:  "endobot",
 		Level: hclog.LevelFromString("DEBUG"),
 	})
 

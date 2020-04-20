@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/endocrimes/notifier/internal/tokensigner"
+	"github.com/endocrimes/endobot/internal/tokensigner"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/hashicorp/go-hclog"
 )

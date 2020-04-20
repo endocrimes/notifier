@@ -1,4 +1,4 @@
-module github.com/endocrimes/notifier
+module github.com/endocrimes/endobot
 
 go 1.14
 
