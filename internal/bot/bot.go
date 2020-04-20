@@ -25,7 +25,7 @@ func New(logger hclog.Logger, tg *tgbotapi.BotAPI, ts tokensigner.TokenSigner) *
 
 func (b *Bot) processCommand(cmd string, update tgbotapi.Update) {
 	switch cmd {
-	case "register":
+	case "token":
 		b.logger.Info("processing command", "command", cmd, "user_id", update.Message.From.ID)
 		tokenBytes, err := b.tokenSigner.GenerateToken(update.Message.Chat, update.Message.From)
 		if err != nil {
