@@ -64,9 +64,14 @@ func main() {
 		}
 	}()
 
+	listenAddr := os.Getenv("LISTEN_ADDR")
+	if listenAddr == "" {
+		listenAddr = ":8080"
+	}
+
 	srv := api.NewServer(logger, bot, signer)
 	go func() {
-		err := srv.Start(shutdownCtx, ":8080")
+		err := srv.Start(shutdownCtx, listenAddr)
 		if err != nil {
 			errCh <- err
 		}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -34,11 +33,13 @@ type Server interface {
 
 func (s *server) Start(ctx context.Context, iface string) error {
 	r := mux.NewRouter()
-	s.registerCmds(r)
+	s.registerRoutes(r)
 	hs := &http.Server{
 		Addr:    iface,
 		Handler: r,
 	}
+
+	s.logger.Info("Starting API Server", "address", iface)
 
 	go func() {
 		<-ctx.Done()
@@ -53,10 +54,6 @@ func (s *server) Start(ctx context.Context, iface string) error {
 	return hs.ListenAndServe()
 }
 
-func (s *server) registerCmds(r *mux.Router) {
-	r.HandleFunc("/notify", s.wrap(s.notify))
-}
-
 func (s *server) handleErr(resp http.ResponseWriter, req *http.Request, err error) {
 	code := 500
 	errMsg := err.Error()
@@ -66,7 +63,7 @@ func (s *server) handleErr(resp http.ResponseWriter, req *http.Request, err erro
 
 	resp.WriteHeader(code)
 	resp.Write([]byte(errMsg))
-	s.logger.Error("request failed", "method", req.Method, "path", reqURL, "error", err, "code", code)
+	s.logger.Error("request failed", "method", req.Method, "path", req.URL.String(), "error", err, "code", code)
 }
 
 // wrap is used to wrap functions to make them more convenient
@@ -114,36 +111,14 @@ func (s *server) wrap(handler func(resp http.ResponseWriter, req *http.Request) 
 }
 
 func (s *server) parseToken(r *http.Request) (string, error) {
-	headerToken := r.Header.Get("Token")
+	headerToken := r.Header.Get("Authorization")
 	if headerToken != "" {
 		return headerToken, nil
 	}
 
+	if v, ok := r.URL.Query()["token"]; ok {
+		return v[0], nil
+	}
+
 	return "", CodedError(401, "Missing token in request")
-}
-
-func (s *server) notify(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	if r.Method != "POST" {
-		return nil, MethodNotAllowedErr
-	}
-
-	token, err := s.parseToken(r)
-	if err != nil {
-		return nil, err
-	}
-
-	chatID, err := s.tokenUnsigner.VerifyToken([]byte(token))
-	if err != nil {
-		return nil, CodedError(401, fmt.Sprintf("Token validation failed: %v", err))
-	}
-
-	var req SendNotificationRequest
-	dec := json.NewDecoder(r.Body)
-	err = dec.Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.bot.Notify(chatID, req.Message)
-	return &SendNotificationResponse{}, err
 }

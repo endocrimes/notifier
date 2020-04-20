@@ -1,11 +1,8 @@
 package api
 
-type AuthenticatedRequest struct {
-	Token string
-}
-
 type SendNotificationRequest struct {
-	Message string
+	Message             string `json:"message"`
+	DisableNotification string `json:"disable_notification"`
 }
 
 type SendNotificationResponse struct {
