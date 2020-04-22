@@ -2,40 +2,57 @@ package bot
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/endocrimes/endobot/internal/tokensigner"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/hashicorp/go-hclog"
 )
 
+type botCommand struct {
+	Alias   string
+	RunFunc func(ctx context.Context, bot *Bot, update tgbotapi.Update) error
+}
+
 type Bot struct {
 	tokenSigner tokensigner.TokenSigner
 	tg          *tgbotapi.BotAPI
 	logger      hclog.Logger
+	commands    map[string]*botCommand
 }
 
 func New(logger hclog.Logger, tg *tgbotapi.BotAPI, ts tokensigner.TokenSigner) *Bot {
-	return &Bot{
+	b := &Bot{
 		tokenSigner: ts,
 		logger:      logger,
 		tg:          tg,
+		commands:    make(map[string]*botCommand),
 	}
+
+	cmds := []*botCommand{
+		tokenCmd,
+	}
+	for _, cmd := range cmds {
+		b.commands[cmd.Alias] = cmd
+	}
+
+	return b
 }
 
 func (b *Bot) processCommand(cmd string, update tgbotapi.Update) {
-	switch cmd {
-	case "token":
-		b.logger.Info("processing command", "command", cmd, "user_id", update.Message.From.ID)
-		tokenBytes, err := b.tokenSigner.GenerateToken(update.Message.Chat, update.Message.From)
-		if err != nil {
-			b.logger.Error("failed to generate token", "user", update.Message.From.UserName, "error", err)
-			b.tg.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Oops! an error occured :("))
-		}
-		token := string(tokenBytes)
-		b.tg.Send(tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Your token is: %s", token)))
-	default:
-		b.tg.Send(tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Unknown command: %s", cmd)))
+	b.logger.Info("processing command", "command", cmd, "user_id", update.Message.From.ID)
+	impl, ok := b.commands[cmd]
+	if !ok {
+		b.logger.Trace("command not found", "command", cmd)
+		b.tg.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Sorry, I didn't recognize that command."))
+		return
+	}
+
+	// TODO: Set a timeout.
+	ctx := context.Background()
+	err := impl.RunFunc(ctx, b, update)
+	if err != nil {
+		b.logger.Error("failed to execute command", "error", err, "command", cmd)
+		b.tg.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Sorry, something went wrong :("))
 	}
 }
 

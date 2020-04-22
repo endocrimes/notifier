@@ -8,6 +8,10 @@ type SendNotificationRequest struct {
 type SendNotificationResponse struct {
 }
 
+type ErrorResponse struct {
+	Error string
+}
+
 type HTTPCodedError interface {
 	error
 	Code() int

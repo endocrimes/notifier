@@ -20,7 +20,8 @@ func (s *server) notify(w http.ResponseWriter, r *http.Request) (interface{}, er
 
 	chatID, err := s.tokenUnsigner.VerifyToken([]byte(token))
 	if err != nil {
-		return nil, CodedError(401, fmt.Sprintf("Token validation failed: %v", err))
+		s.logger.Info("token verification failed", "error", err)
+		return nil, CodedError(401, fmt.Sprintf("the provided token was invalid"))
 	}
 
 	var req SendNotificationRequest

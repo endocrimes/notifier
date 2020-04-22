@@ -61,8 +61,16 @@ func (s *server) handleErr(resp http.ResponseWriter, req *http.Request, err erro
 		code = http.Code()
 	}
 
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetIndent("", "    ")
+	enc.Encode(&ErrorResponse{
+		Error: errMsg,
+	})
+
 	resp.WriteHeader(code)
-	resp.Write([]byte(errMsg))
+	resp.Header().Set("Content-Type", "application/json")
+	resp.Write(buf.Bytes())
 	s.logger.Error("request failed", "method", req.Method, "path", req.URL.String(), "error", err, "code", code)
 }
 
@@ -94,6 +102,7 @@ func (s *server) wrap(handler func(resp http.ResponseWriter, req *http.Request) 
 		if obj != nil {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
+			enc.Encode(obj)
 			if prettyPrint {
 				enc.SetIndent("", "    ")
 			}
